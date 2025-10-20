@@ -1,0 +1,9 @@
+STEAM: BFF4DEE266F9DFA352FD566DA7D16867
+
+PSN-API: {"npsso":"261n4I8HmOY5LpoEmZUary7sRPw1u5c0f0b9JzEpSWI1aZKScUzLbC8LCwgozAUV"}
+
+Retroachievements: cL2xIgwBazuvtln7OU3uAvpAGJOke7P2
+
+RAWG: e9546043d22d4aae8ec55dc7efb2bb92
+
+xbl: 97b072b1-25b9-4de0-8e6b-ecba9c8bf37e 
