@@ -39,13 +39,6 @@ interface PSNAchievementListProps {
   trophies: PSNTrophy[];
 }
 
-const trophyColors: Record<string, string> = {
-  bronze: "bg-yellow-500 text-black",
-  silver: "bg-gray-300 text-black",
-  gold: "bg-orange-400 text-black",
-  platinum: "bg-purple-600 text-white",
-};
-
 const PSNAchievementList: React.FC<PSNAchievementListProps> = ({ trophies }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
@@ -55,31 +48,41 @@ const PSNAchievementList: React.FC<PSNAchievementListProps> = ({ trophies }) => 
 
   return (
     <div className="mt-3">
-      <h4 className="text-sm font-semibold mb-3">Trophies:</h4>
+      <h4 className="text-sm font-semibold mb-3 text-[#FFD700] flex items-center gap-1">
+        Achievements:
+      </h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-80 overflow-y-auto">
         {trophies.map((trophy, index) => (
           <div
             key={trophy.trophyName}
-            className={`rounded-lg p-2 cursor-pointer transition-all duration-300 
-              ${trophy.isEarned ? "shadow-lg" : "bg-gray-700 hover:bg-gray-600"}
-            `}
+            className={`rounded-lg border p-2 cursor-pointer transition-all duration-300 
+                ${trophy.isEarned
+                  ? "border-[#E4C76F]/40 bg-gradient-to-br from-[#3A3F4B] to-[#2C2F38] hover:shadow-[0_0_10px_rgba(255,215,0,0.3)] ring-[#FFD700]/60"
+                  : "border-gray-600 bg-gradient-to-br from-[#2A2D34] to-[#1C1E23] hover:shadow-[0_0_8px_rgba(100,100,100,0.2)]"}
+                hover:scale-105 ${expandedIndex === index ? "ring-2" : ""}`}
             onClick={() => toggleExpand(index)}
           >
             <div className="flex items-center justify-between">
-              <span className={`flex items-center gap-2 text-xs font-semibold`}>
-                {trophy.isEarned ? "🏆" : "🔒"} 
-                <span className={`${trophyColors[trophy.type.toLowerCase()] || "bg-gray-500 text-white"} px-2 py-0.5 rounded`}>
-                  {trophy.type}
+                <span
+                  className={`text-xs font-semibold flex items-center gap-1 ${trophy.isEarned ? "text-[#FFD700]" : "text-gray-400"
+                    }`}
+                >
+                  {trophy.isEarned ? "⭐" : "🔒"} {trophy.trophyName}
                 </span>
-                {trophy.trophyName}
-              </span>
-              <span className="text-xs">{expandedIndex === index ? "▲" : "▼"}</span>
-            </div>
+                <span
+                  className={`text-xs ${trophy.isEarned ? "text-[#FFD700]" : "text-gray-400"
+                    }`}
+                >
+                  {expandedIndex === index ? "▲" : "▼"}
+                </span>
+              </div>
             {expandedIndex === index && (
-              <p className="mt-1 text-xs text-gray-200 transition-all duration-300">
-                {trophy.trophyDetail || "No description available."}
-              </p>
-            )}
+                <div className="mt-2 text-xs transition-all duration-300">
+                  <p className={`${trophy.isEarned ? "text-[#FFD700]" : "text-gray-400"}`}>
+                    {trophy.trophyDetail || "No description available."}
+                  </p>  
+                </div>
+              )}
           </div>
         ))}
       </div>

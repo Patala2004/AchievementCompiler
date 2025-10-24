@@ -2,78 +2,101 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getUserById } from "../api/userApi"; // your API function
 import { SteamUser } from './SteamStructures'
-import { PSNGame, PSNTrophy } from './PSNStructures';
+import { RetroUser } from "./RetroStructures";
+import * as retroApi from "../api/retroApi";
 import UserGameList from "./UserGameList";
 import * as steamApi from "../api/steamApi"
 import * as psnApi from "../api/psnApi"
+import { PSNUser } from "./PSNStructures";
 
 export default function UserProfile() {
-    const { id } = useParams();  // <-- This grabs the `id` from the URL
-    const [user, setUser] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
+  const { id } = useParams();  // <-- This grabs the `id` from the URL
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-    const [steamUser, setSteamUser] = useState<any>(null);
-    const [steamUserError, setSteamUserError] = useState<boolean>(false);
+  const [steamUser, setSteamUser] = useState<any>(null);
+  const [steamUserError, setSteamUserError] = useState<boolean>(false);
 
-    const [psnUser, setPsnUser] = useState<any>(null);
-    const [psnUserError, setPsnUserError] = useState<boolean>(false);
+  const [psnUser, setPsnUser] = useState<any>(null);
+  const [psnUserError, setPsnUserError] = useState<boolean>(false);
 
-    useEffect(() => {
-        async function fetchUser() {
-            try {
-                if (!id) return;
-                const u = await getUserById(id);
-                setUser(u);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        }
+  const [retroUser, setRetroUser] = useState<any>(null);
+  const [retroUserError, setRetroUserError] = useState<boolean>(false);
 
-        fetchUser();
-    }, [id]);
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        if (!id) return;
+        const u = await getUserById(id);
+        setUser(u);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
 
-    useEffect(() => {
-        async function fetchSteamUser() {
-            try {
-                const profile: SteamUser = await steamApi.getSteamProfile(user.steam_id);
-                setSteamUser(profile);
-            } catch (err: any) {
-                setSteamUser(null);
-                setSteamUserError(true);
-            }
-        }
-        if (user?.steam_id) {
-            fetchSteamUser();
-        }
-    }, [user]);
+    fetchUser();
+  }, [id]);
 
-    // getPSNProfile
-    useEffect(() => {
-        async function fetchPSNUser() {
-            try {
-                const profile = await psnApi.getPSNProfile(user.psn_id);
-                setPsnUser(profile);
+  useEffect(() => {
+    async function fetchSteamUser() {
+      try {
+        const profile: SteamUser = await steamApi.getSteamProfile(user.steam_id);
+        setSteamUser(profile);
+      } catch (err: any) {
+        setSteamUser(null);
+        setSteamUserError(true);
+      }
+    }
+    if (user?.steam_id) {
+      fetchSteamUser();
+    }
+  }, [user]);
 
-            } catch (err: any) {
-                setPsnUser(null);
-                setPsnUserError(true);
-            }
-        }
-        if (user?.psn_id) {
-            fetchPSNUser();
-        }
-    }, [user]);
+  // getPSNProfile
+  useEffect(() => {
+    async function fetchPSNUser() {
+      try {
+        const profile: PSNUser = await psnApi.getPSNProfile(user.psn_id);
+        setPsnUser(profile);
 
-    if (loading) return <div>Loading...</div>;
-    if (!user) return <div>User not found</div>;
+      } catch (err: any) {
+        setPsnUser(null);
+        setPsnUserError(true);
+      }
+    }
+    if (user?.psn_id) {
+      fetchPSNUser();
+    }
+  }, [user]);
 
-    // Profile boxes
-    let steamProfileBox = null;
-    let psnProfileBox = null;
+  // getRetroProfile
+  useEffect(() => {
+    async function fetchRetroUser() {
+      try {
+        const profile: RetroUser = await retroApi.getRetroProfile(user.retroachievements_id);
+        console.log(profile);
+        setRetroUser(profile);
+      } catch (err: any) {
+        setRetroUser(null);
+        setRetroUserError(true);
+      }
+    }
+    if(user?.retroachievements_id){
+      fetchRetroUser();
+    }
+  }, [user]);
 
-    
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <div>User not found</div>;
+
+  // Profile boxes
+  let steamProfileBox = null;
+  let psnProfileBox = null;
+  let retroProfileBox = null;
+
+
   // --- Steam Profile Box ---
   if (steamUser) {
     steamProfileBox = (
@@ -114,7 +137,7 @@ export default function UserProfile() {
 
   // --- PSN Profile Box ---
   if (psnUser) {
-    psnProfileBox = (
+    retroProfileBox = (
       <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
         <img
           src={psnUser.avatar || "/fallback.jpg"}
@@ -147,6 +170,31 @@ export default function UserProfile() {
     );
   }
 
+  // --- Retroachievements Profile Box ---
+  if(retroUser){
+    psnProfileBox = (
+      <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
+        <img
+          src={("https://www.retroachievements.org/" + retroUser.userPic) || "/fallback.jpg"}
+          alt={retroUser.user}
+          className="w-24 h-24 rounded-full object-cover border-4 border-[#2C3848] shadow-md mb-3"
+        />
+        <h3 className="text-lg font-semibold mb-1">{retroUser.user}</h3>
+        {/* <p className="text-xs text-gray-400 mb-2">User ID: {psnUser.userId}</p> */}
+        <p className="text-xs text-gray-400 mb-2"> Total Points: {retroUser.totalPoints} </p>
+        <p className="text-xs text-gray-400 mb-2"> Motto: { retroUser.motto || "No motto" } </p>
+        <a
+          href={`https://www.retroachievements.org/user/${retroUser.user}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-1.5 bg-gradient-to-r from-[#6A0DAD] to-[#C77DF3] rounded-md text-sm font-medium hover:from-[#003C94] hover:to-[#0055B3] transition-all duration-200"
+        >
+          View RA Profile
+        </a>
+      </div>
+    );
+  }
+
   // --- Unified Profile Header ---
   const profileHeader = (
     <div className="text-center text-white mt-10">
@@ -162,7 +210,8 @@ export default function UserProfile() {
     <div className="max-w-5xl mx-auto mt-8 flex flex-col sm:flex-row justify-center items-stretch gap-6">
       {steamProfileBox}
       {psnProfileBox}
-      {(!steamUser && !psnUser && !steamUserError && !psnUserError) && (
+      {retroProfileBox}
+      {(!steamUser && !psnUser && !steamUserError && !psnUserError && !retroUser && !retroUserError) && (
         <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 text-center text-white w-full sm:w-80">
           <p>Loading profiles...</p>
         </div>

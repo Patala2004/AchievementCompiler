@@ -3,6 +3,7 @@ import cors from "cors";
 import axios from "axios";
 import dotenv from "dotenv";
 import type { AuthTokensResponse, Trophy } from "psn-api";
+import { buildAuthorization, getUserProfile, getUserCompletionProgress, getAchievementsEarnedBetween, getGameInfoAndUserProgress } from "@retroachievements/api";
 import {
   exchangeAccessCodeForAuthTokens,
   exchangeNpssoForAccessCode,
@@ -21,6 +22,11 @@ app.use(cors()); // allow all origins by default
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
+
+let retroAuth = null;
+if (process.env.RETRO_USERNAME && process.env.RETRO_KEY) {
+  retroAuth = buildAuthorization({ username: process.env.RETRO_USERNAME, webApiKey: process.env.RETRO_KEY });
+}
 
 // RENDER SERVER
 
@@ -45,9 +51,8 @@ app.get("/api/steam/getUsername", async (req, res) => {
         params: { key: STEAM_KEY, steamids: steamId },
       }
     );
-    console.log(response.data);
-    if(response.data?.response?.players && response.data?.response?.players.length === 0){
-      res.status(404).json({ error: "User not found "});
+    if (response.data?.response?.players && response.data?.response?.players.length === 0) {
+      res.status(404).json({ error: "User not found " });
     }
     else res.json(response.data);
   } catch (err: any) {
@@ -266,7 +271,7 @@ app.get('/api/psn/getUserPlayedGames', async (req, res) => {
 app.get('/api/psn/getUserTrophiesEarnedForTitle', async (req, res) => {
   const { psnId, gameId, platform } = req.query;
 
-  if (!psnId || !gameId ||!platform) {
+  if (!psnId || !gameId || !platform) {
     return res.status(400).json({ error: "Missing psnId" });
   }
 
@@ -315,6 +320,94 @@ app.get('/api/psn/getUserTrophiesEarnedForTitle', async (req, res) => {
     res.json(mergedTrophies);
   } catch (err: any) {
     console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// ---- Retroachievements ----
+app.get('/api/retro/getProfile', async (req, res) => {
+  const { retroUsername } = req.query;
+
+  if (!retroUsername) {
+    return res.status(400).json({ error: "Missing username" });
+  }
+
+  if (!retroAuth) {
+    return res.status(500).json({ error: "Authorization token is null. Please check that the API key is correct." })
+  }
+
+  try {
+    const response = await getUserProfile(retroAuth, { username: String(retroUsername) });
+    res.json(response);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/retro/getUserCompletionProgress', async (req, res) => {
+  const { retroUsername } = req.query;
+
+  if (!retroUsername) {
+    return res.status(400).json({ error: "Missing username" });
+  }
+
+  if (!retroAuth) {
+    return res.status(500).json({ error: "Authorization token is null. Please check that the API key is correct." })
+  }
+
+  try {
+    const response = await getUserCompletionProgress(retroAuth, { username: String(retroUsername), count: 500 });
+    res.json(response);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/retro/getAchievementsEarned', async (req, res) => {
+  const { retroUsername } = req.query;
+
+  if (!retroUsername) {
+    return res.status(400).json({ error: "Missing username" });
+  }
+
+  if (!retroAuth) {
+    return res.status(500).json({ error: "Authorization token is null. Please check that the API key is correct." })
+  }
+
+  try {
+    const response = await getAchievementsEarnedBetween(retroAuth,
+      { username: String(retroUsername), fromDate: new Date("2000-01-01"), toDate: new Date(Date.now()), });
+    res.json(response);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/retro/getAchievementsEarnedForSpecificGame', async (req, res) => {
+  const { retroUsername, gameId } = req.query;
+
+  if (!retroUsername) {
+    return res.status(400).json({ error: "Missing username" });
+  }
+  if (!gameId) {
+    return res.status(400).json({ error: "Missing gameId" });
+  }
+
+  if (!retroAuth) {
+    return res.status(500).json({ error: "Authorization token is null. Please check that the API key is correct." })
+  }
+
+  try {
+    const response = await getGameInfoAndUserProgress(
+      retroAuth,
+      {
+        username: String(retroUsername),
+        gameId: String(gameId),
+      },
+    );
+    res.json(response);
+  } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });

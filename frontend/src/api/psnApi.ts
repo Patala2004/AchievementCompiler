@@ -82,4 +82,40 @@ export async function getPSNGameTrophies(psnId: string, games: PSNGame[] | null)
     return res;
 }
 
+export async function getPSNGameTrophy(psnId: string, game: PSNGame): Promise<PSNTrophy[]> {
+    if (!game) {
+        return [];
+    }
+
+    // Define rarity order: highest first
+    const rarityOrder: Record<string, number> = {
+        platinum: 4,
+        gold: 3,
+        silver: 2,
+        bronze: 1,
+    };
+
+    const response = await fetch(`http://localhost:5000/api/psn/getUserTrophiesEarnedForTitle?psnId=${psnId}&gameId=${game.id}&platform=${game.platform}`);
+
+    const data = await response.json(); // data = array of trophies
+
+    data.sort((a: { type: string | number; isEarned: any; }, b: { type: string | number; isEarned: any; }) => {
+        if(a.isEarned && !b.isEarned) return -1;
+        else if(b.isEarned && !a.isEarned) return 1;
+        // Compare by type rarity first (descending)
+        const rarityDiff = rarityOrder[b.type] - rarityOrder[a.type];
+        if (rarityDiff !== 0) return rarityDiff;
+
+        // If same type, earned trophies first
+        if (a.isEarned === b.isEarned) return 0;
+        return a.isEarned ? -1 : 1;
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to fetch (${response.status})`);
+    }
+
+    return data;
+}
+
 
