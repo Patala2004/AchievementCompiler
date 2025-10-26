@@ -1,4 +1,3 @@
-import { useResolvedPath } from "react-router-dom";
 import { apiClient } from "./axiosClient";
 
 export interface User {
@@ -33,7 +32,7 @@ export async function signUpUser(
     username,
     password,
   });
-  if(response.status == 201){
+  if(response.status === 201){
     const response2 = await apiClient.post<LoginResponse>("/users/login/", {
       username,
       password,
@@ -49,7 +48,7 @@ export async function getAuthenticatedUser(): Promise<any> {
 }
 
 export async function updateAuthenticatedUser(user : {
-    user: "",
+    username: "",
     steam_id: "",
     xbox_id: "",
     psn_id: "",
@@ -57,12 +56,14 @@ export async function updateAuthenticatedUser(user : {
     id: ""
   }) : Promise<any> {
   const response = await apiClient.put<User>(`/users/${user.id}/`,{
-      username : user.user,
+      username : user.username,
       steam_id : user.steam_id,
       xbox_id : user.xbox_id,
       psn_id : user.psn_id,
       retroachievements_id : user.retroachievements_id
     });
+    
+    return response.data;
 }
 
 export async function getAllUsers(filter? : string) : Promise<any>{

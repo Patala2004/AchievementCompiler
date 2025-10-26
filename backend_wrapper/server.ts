@@ -412,5 +412,56 @@ app.get('/api/retro/getAchievementsEarnedForSpecificGame', async (req, res) => {
   }
 });
 
+// --- XBOX Functions ---
+
+app.get('/api/xbox/getProfile', async (req, res) => {
+  const { xboxId } = req.query;
+
+  const XBOX_KEY = process.env.XBOX_KEY
+
+  if (!xboxId) {
+    return res.status(400).json({ error: "Missing xbox id" });
+  }
+
+  try {
+    const response = await axios.get(
+      `https://xbl.io/api/v2/account/${xboxId}/`,
+      {
+        headers: {
+          'X-Authorization': `${XBOX_KEY}`
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/xbox/getGames', async (req, res) => {
+  const {xboxId} = req.query;
+
+  const XBOX_KEY = process.env.XBOX_KEY
+
+  if (!xboxId) {
+    return res.status(400).json({ error: "Missing xbox id" });
+  }
+
+  try {
+    const response = await axios.get(
+      `https://xbl.io/api/v2/player/titleHistory/${xboxId}/`,
+      {
+        headers: {
+          'X-Authorization': `${XBOX_KEY}`
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  } 
+});
 
 

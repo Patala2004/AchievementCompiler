@@ -1,0 +1,19 @@
+services:
+  myapi:
+    build: ./myapi/
+    command: sh -c 'gunicorn myapi.wsgi:application --bind 0.0.0.0:8000 --reload --preload'
+    volumes:
+      - ./myapi/:/home/app/
+    ports:
+      - 8000:8000
+  backend_wrapper:
+    build: ./backend_wrapper/
+    ports: 
+      - 5000:5000
+  frontend:
+    build: ./frontend/
+    ports:
+      - 3000:80
+    depends_on:
+      - myapi
+      - backend_wrapper

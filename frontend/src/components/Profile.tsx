@@ -55,7 +55,8 @@ export default function Profile() {
     setSaving(true);
     setError(null);
     try {
-      await updateAuthenticatedUser(user); // API call to update user
+      const response = await updateAuthenticatedUser(user); // API call to update user
+      setUser(response);
       alert("Profile updated successfully!");
     } catch (err: any) {
       console.error(err);
@@ -71,7 +72,7 @@ export default function Profile() {
 
   let profile_info_square = (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-[#717E91] rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold text-center text-white mb-6">{user.user}</h2>
+      <h2 className="text-2xl font-semibold text-center text-white mb-6">{user.username}</h2>
       <div>Loading...</div>
     </div>
   );
@@ -80,7 +81,7 @@ export default function Profile() {
 
   if (!loading) profile_info_square = (
     <div className="max-w-lg mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg">
-      <h2 className="text-2xl font-semibold text-center text-white mb-6">{user.user}</h2>
+      <h2 className="text-2xl font-semibold text-center text-white mb-6">{user.username}</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="flex flex-col">

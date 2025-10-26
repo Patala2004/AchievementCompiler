@@ -3,12 +3,14 @@ import React, { useEffect, useState } from "react";
 import { SteamGame, SteamAchievement } from "./SteamStructures";
 import { PSNGame, PSNTrophy } from "./PSNStructures";
 import { RetroAchievement, RetroGame } from "./RetroStructures";
+import { XboxGame } from "../components/XboxStructures";
 import AchievementList from "./SteamStructures";
 import PSNAchievementList from "./PSNStructures";
 import RetroAchievementList from "./RetroStructures";
 import * as steamApi from "../api/steamApi"
 import * as psnApi from "../api/psnApi"
 import * as retroApi from "../api/retroApi"
+import * as xboxApi from "../api/xboxApi"
 
 
 type UserGameListProps = {
@@ -30,10 +32,15 @@ export default function UserGameList({
 
     const [steamGames, setSteamGames] = useState<SteamGame[] | null>(null);
     const [steamError, setSteamError] = useState<boolean>(false);
+
     const [psnGames, setPSNGames] = useState<PSNGame[] | null>(null);
     const [psnError, setPSNError] = useState<boolean>(false);
+
     const [retroGames, setRetroGames] = useState<RetroGame[] | null>(null);
     const [retroError, setRetroError] = useState<boolean>(false);
+
+    const [xboxGames, setXboxGames] = useState<XboxGame[] | null>(null);
+    const [xboxError, setXboxError] = useState<boolean>(false);
 
     const [steamAchievements, setSteamAchievements] = useState<SteamAchievement[][]>([]);
     const [loadingSteamAchievements, setLoadingSteamAchievements] = useState<boolean[]>([]);
@@ -46,6 +53,10 @@ export default function UserGameList({
     const [retroAchievements, setRetroAchievements] = useState<RetroAchievement[][]>([]);
     const [loadingRetroAchievements, setLoadingRetroAchievements] = useState<boolean[]>([]);
     const [openRetroDorpdowns, setOpenRetroDorpdowns] = useState<boolean[]>([]);
+
+    // const [xboxAchievements, setXboxAchievements] = useState<RetroAchievement[][]>([]); // Dont work :(
+    // const [loadingXboxAchievements, setLoadingXboxAchievements] = useState<boolean[]>([]);
+    // const [openXboxDropdowns, setOpenXboxDropdowns] = useState<boolean[]>([]);
 
     const [selectedPlatform, setSelectedPlatform] = useState<string>('steam');
 
@@ -100,6 +111,16 @@ export default function UserGameList({
             }
         }
 
+        async function getXboxGames() {
+            try {
+                const gameList = await xboxApi.getXboxGames(user.xbox_id);
+                setXboxGames(gameList);
+            } catch (err: any) {
+                await setXboxGames(null);
+                await setXboxError(true);
+            }
+        }
+
         if (user?.steam_id) {
             getSteamGames();
         }
@@ -108,6 +129,9 @@ export default function UserGameList({
         }
         if (user?.retroachievements_id) {
             getRetroGames();
+        }
+        if (user?.xbox_id) {
+            getXboxGames();
         }
     }, [user]);
 
@@ -242,6 +266,7 @@ export default function UserGameList({
         { id: 'steam', label: 'Steam', color: 'from-[#00B4DB] to-[#0083B0]' },
         { id: 'psn', label: 'PSN', color: 'from-[#004AAD] to-[#0066CC]' },
         { id: 'retro', label: 'RA', color: 'from-[#6A0DAD] to-[#C77DF3]' },
+        { id: 'xbox', label: 'XBox', color: 'from-[#006400] to-[#00B300]' }
     ];
 
     const platform_selector = (
@@ -399,7 +424,7 @@ export default function UserGameList({
         else if (psnGames.length === 0) {
             gameBox = (
                 <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
-                    No games found for this PSN account.
+                    No games found for this PSN account. Make sure your account exists and is set to public.
                 </div>
             );
         }
@@ -519,7 +544,7 @@ export default function UserGameList({
         } else if (retroGames.length === 0) {
             gameBox = (
                 <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
-                    No games found for this RetroAchievements account.
+                    No games found for this RetroAchievements account. Make sure your account exists and is set to public.
                 </div>
             );
         } else
@@ -603,6 +628,90 @@ export default function UserGameList({
                     </div>
                 </div>
             );
+    } else if (selectedPlatform === 'xbox') {
+        if (!xboxGames) {
+            gameBox = (
+                <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
+                    Loading your XBox library...
+                </div>
+            );
+            if (xboxError) {
+                gameBox = (
+                    <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
+                        {errorMessageProfileNotFound}
+                    </div>
+                );
+            }
+            else if (!user.xbox_id || user.xbox_id === "") {
+                gameBox = (
+                    <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
+                        {errorMessageProfileNotSet}
+                    </div>
+                );
+            }
+
+        }
+        else if (xboxGames.length === 0) {
+            gameBox = (
+                <div className="max-w-4xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg text-center text-white">
+                    No games found for this XBox account. Make sure your account exists and is set to public.
+                </div>
+            );
+        }
+
+        else gameBox = gameBox = (
+            <div className="max-w-6xl mx-auto mt-10 p-6 bg-[#1F2A38] rounded-lg shadow-lg">
+                <h2 className="text-2xl font-semibold text-center text-white mb-6">
+                    XBox Games ({xboxGames.length})
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    {xboxGames.map((game, index) => (
+                        <div
+                            key={game.titleId}
+                            className="bg-[#2C3848] rounded-lg shadow-lg overflow-hidden hover:scale-105 transition-transform duration-200 text-white"
+                        >
+                            {/* Game Icon */}
+                            <img
+                                src={(game.displayImage) || "/fallback.jpg"}
+                                alt={game.titleId}
+                                className="w-full object-cover bg-[#00000033]"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/fallback.jpg";
+                                }}
+                            />
+
+                            {/* Game Info */}
+                            <div className="p-4 text-center">
+                                <h3 className="text-lg font-semibold mb-1">{game.name}</h3>
+                                <p className="text-sm text-gray-300 mb-2">{game.devices.join(", ")}</p>
+
+                                {/* Achievement Progress */}
+                                {game.achievement.totalAchievements > 0 ? (
+                                    <div className="mt-2">
+                                        <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                                            <div
+                                                className="bg-gradient-to-r from-[#FFD700] via-[#FFB800] to-[#FF8C00] h-2 rounded-full transition-all duration-300"
+                                                style={{
+                                                    width: `${(game.achievement.currentAchievements / game.achievement.totalAchievements) * 100}%`,
+                                                }}
+                                            />
+                                        </div>
+                                        <p className="text-xs text-gray-400">
+                                            {game.achievement.currentAchievements}/{game.achievement.totalAchievements} achievements unlocked
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        No achievements defined.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     return (

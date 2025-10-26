@@ -66,7 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user: User = request.user
         print(request.user)
         data = {
-            'user': str(request.user),
+            'username': str(request.user),
             'auth': str(request.auth),
             'isadmin' : user.is_staff,
             'steam_id' : user.steam_id,

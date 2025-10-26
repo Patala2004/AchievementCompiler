@@ -7,7 +7,9 @@ import * as retroApi from "../api/retroApi";
 import UserGameList from "./UserGameList";
 import * as steamApi from "../api/steamApi"
 import * as psnApi from "../api/psnApi"
+import * as xboxApi from "../api/xboxApi"
 import { PSNUser } from "./PSNStructures";
+import { XboxUser } from "./XboxStructures";
 
 export default function UserProfile() {
   const { id } = useParams();  // <-- This grabs the `id` from the URL
@@ -22,6 +24,9 @@ export default function UserProfile() {
 
   const [retroUser, setRetroUser] = useState<any>(null);
   const [retroUserError, setRetroUserError] = useState<boolean>(false);
+
+  const [xboxUser, setXboxUser] = useState<any>(null);
+  const [xboxUserError, setXboxUserError] = useState<boolean>(false);
 
   useEffect(() => {
     async function fetchUser() {
@@ -76,15 +81,30 @@ export default function UserProfile() {
     async function fetchRetroUser() {
       try {
         const profile: RetroUser = await retroApi.getRetroProfile(user.retroachievements_id);
-        console.log(profile);
         setRetroUser(profile);
       } catch (err: any) {
         setRetroUser(null);
         setRetroUserError(true);
       }
     }
-    if(user?.retroachievements_id){
+    if (user?.retroachievements_id) {
       fetchRetroUser();
+    }
+  }, [user]);
+
+  // getXboxProfile
+  useEffect(() => {
+    async function fetchXboxUser() {
+      try {
+        const profile: XboxUser = await xboxApi.getXboxProfile(user.xbox_id);
+        setXboxUser(profile);
+      } catch (err: any) {
+        setXboxUser(null);
+        setXboxUserError(true);
+      }
+    }
+    if (user?.xbox_id) {
+      fetchXboxUser();
     }
   }, [user]);
 
@@ -95,6 +115,7 @@ export default function UserProfile() {
   let steamProfileBox = null;
   let psnProfileBox = null;
   let retroProfileBox = null;
+  let xboxProfileBox = null;
 
 
   // --- Steam Profile Box ---
@@ -129,7 +150,7 @@ export default function UserProfile() {
           alt="USER NOT FOUND"
           className="w-24 h-24 rounded-full object-cover border-4 border-[#3C4758] shadow-md mb-3"
         />
-        <h3 className="text-lg font-semibold mb-1">Steam Profile Not Found</h3>
+        <h3 className="text-lg font-semibold mb-1 text-center">Steam Profile Not Found</h3>
         <p className="text-xs text-gray-400 mb-2">Steam ID: {user.steam_id}</p>
       </div>
     );
@@ -137,7 +158,7 @@ export default function UserProfile() {
 
   // --- PSN Profile Box ---
   if (psnUser) {
-    retroProfileBox = (
+    psnProfileBox = (
       <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
         <img
           src={psnUser.avatar || "/fallback.jpg"}
@@ -164,15 +185,15 @@ export default function UserProfile() {
           alt="USER NOT FOUND"
           className="w-24 h-24 rounded-full object-cover border-4 border-[#2C3848] shadow-md mb-3"
         />
-        <h3 className="text-lg font-semibold mb-1">PSN Profile Not Found</h3>
+        <h3 className="text-lg font-semibold mb-1 text-center">PSN Profile Not Found</h3>
         <p className="text-xs text-gray-400 mb-2">User ID: {user.psn_id}</p>
       </div>
     );
   }
 
   // --- Retroachievements Profile Box ---
-  if(retroUser){
-    psnProfileBox = (
+  if (retroUser) {
+    retroProfileBox = (
       <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
         <img
           src={("https://www.retroachievements.org/" + retroUser.userPic) || "/fallback.jpg"}
@@ -182,7 +203,7 @@ export default function UserProfile() {
         <h3 className="text-lg font-semibold mb-1">{retroUser.user}</h3>
         {/* <p className="text-xs text-gray-400 mb-2">User ID: {psnUser.userId}</p> */}
         <p className="text-xs text-gray-400 mb-2"> Total Points: {retroUser.totalPoints} </p>
-        <p className="text-xs text-gray-400 mb-2"> Motto: { retroUser.motto || "No motto" } </p>
+        <p className="text-xs text-gray-400 mb-2"> Motto: {retroUser.motto || "No motto"} </p>
         <a
           href={`https://www.retroachievements.org/user/${retroUser.user}`}
           target="_blank"
@@ -191,6 +212,45 @@ export default function UserProfile() {
         >
           View RA Profile
         </a>
+      </div>
+    );
+  } else if (retroUserError && user.retroachievements_id) {
+    retroProfileBox = (
+      <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
+          alt="USER NOT FOUND"
+          className="w-24 h-24 rounded-full object-cover border-4 border-[#2C3848] shadow-md mb-3"
+        />
+        <h3 className="text-lg font-semibold mb-1 text-center">RetroAchievements Profile Not Found</h3>
+        <p className="text-xs text-gray-400 mb-2">User ID: {user.retroachievements_id}</p>
+      </div>
+    );
+  }
+
+  // --- XBox Profile Box ---
+  if (xboxUser) {
+    xboxProfileBox = (
+      <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
+        <img
+          src={(xboxUser.settingsObject.GameDisplayPicRaw) || "/fallback.jpg"}
+          alt={xboxUser.settingsObject.Gamertag}
+          className="w-24 h-24 rounded-full object-cover border-4 border-[#2C3848] shadow-md mb-3"
+        />
+        <h3 className="text-lg font-semibold mb-1">{xboxUser.settingsObject.Gamertag}</h3>
+        <p className="text-xs text-gray-400 mb-2">Xuid: {xboxUser.id}</p>
+      </div>
+    )
+  } else if (xboxUserError && user.xbox_id) {
+    xboxProfileBox = (
+      <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 flex flex-col items-center text-white w-full sm:w-80">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
+          alt="USER NOT FOUND"
+          className="w-24 h-24 rounded-full object-cover border-4 border-[#2C3848] shadow-md mb-3"
+        />
+        <h3 className="text-lg font-semibold mb-1 text-center">XBox Profile Not Found</h3>
+        <p className="text-xs text-gray-400 mb-2">User ID: {user.xbox_id}</p>
       </div>
     );
   }
@@ -210,6 +270,7 @@ export default function UserProfile() {
     <div className="max-w-5xl mx-auto mt-8 flex flex-col sm:flex-row justify-center items-stretch gap-6">
       {steamProfileBox}
       {psnProfileBox}
+      {xboxProfileBox}
       {retroProfileBox}
       {(!steamUser && !psnUser && !steamUserError && !psnUserError && !retroUser && !retroUserError) && (
         <div className="bg-[#1F2A38] rounded-lg shadow-lg p-6 text-center text-white w-full sm:w-80">
